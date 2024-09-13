@@ -1,0 +1,10 @@
+[proxies]
+# http = "http://127.0.0.1:61860"
+# https = "http://127.0.0.1:61860"
+
+[urls_to_scrape]
+urls = [
+    "https://x.com/kemonono",
+    "https://x.com/ThePSF",
+    "https://x.com/clcoding",
+]

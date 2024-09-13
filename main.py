@@ -1,0 +1,42 @@
+import asyncio
+
+from playwright.async_api import async_playwright
+from rich.prompt import Prompt
+
+from config_loader import load_config
+from cookies_handler import load_cookies, save_cookies
+from scraper import twitter_to_markdown
+
+
+async def login_and_save_cookies(browser):
+    context = await browser.new_context()
+    await load_cookies(context)
+    page = await context.new_page()
+    await page.goto('https://x.com/home')
+
+    if page.url == 'https://x.com/home':
+        print("自动检测：已登录")
+    else:
+        Prompt.ask("请手动登录，并在完成后按回车键继续...")
+
+    await save_cookies(context)
+    return context
+
+
+async def main():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        context = await login_and_save_cookies(browser)
+        config = load_config()
+        proxies = {k: v for k, v in config['proxies'].items() if v}
+        urls_to_scrape = config['urls_to_scrape']['urls']
+        tasks = [twitter_to_markdown(context, url, proxies) for url in urls_to_scrape]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"抓取时出错: {result}")
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

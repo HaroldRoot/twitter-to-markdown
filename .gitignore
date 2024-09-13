@@ -1,0 +1,6 @@
+.idea
+__pycache__
+images
+config.toml
+cookies.json
+tmp.py
