@@ -95,16 +95,20 @@ async def scrape_basic_info(page, url):
     return basic_info
 
 
-async def scrape_tweets(context, url, proxies):
+async def scrape_tweets(context, url, proxies, folder_path):
+    pass
+
+
+async def twitter_to_markdown(context, url, proxies):
     async_name = asyncio.current_task().get_name()
+    print(async_name)
+
     await load_cookies(context)
     page = await context.new_page()
     await page.goto(url)
-    print(async_name)
+
     basic_info = await scrape_basic_info(page, url)
     print(basic_info)
     folder_path = basic_info_to_markdown(basic_info)
 
-
-async def twitter_to_markdown(context, url, proxies):
-    await scrape_tweets(context, url, proxies)
+    await scrape_tweets(context, url, proxies, folder_path)
