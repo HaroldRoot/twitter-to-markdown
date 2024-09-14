@@ -1,6 +1,7 @@
 .idea
 __pycache__
 images
+results
 config.toml
 cookies.json
 tmp.py

@@ -3,12 +3,18 @@ import asyncio
 from bs4 import BeautifulSoup
 
 from cookies_handler import load_cookies
+from markdowner import basic_info_to_markdown
 
 
 async def get_final_url(page, short_url):
-    await page.goto(short_url)
-    final_url = page.url
-    return final_url
+    try:
+        await page.goto(short_url)
+        final_url = page.url
+        return final_url
+    except Exception as e:
+        print(f"尝试扩展短链接时出错: {e}")
+        print("使用短链接，放弃扩展为实际链接")
+        return short_url
 
 
 async def scrape_basic_info(page, url):
@@ -68,7 +74,7 @@ async def scrape_basic_info(page, url):
 
         user_join_date = user_profile_header_items.find('span', attrs={'data-testid': 'UserJoinDate'})
         if user_join_date:
-            print(f"加入推特的日期: {user_join_date.text}")
+            print(f"注册时间: {user_join_date.text}")
             basic_info["user_join_date"] = user_join_date.text
 
     await page.goto(f"{url}/header_photo")
@@ -97,6 +103,7 @@ async def scrape_tweets(context, url, proxies):
     print(async_name)
     basic_info = await scrape_basic_info(page, url)
     print(basic_info)
+    folder_path = basic_info_to_markdown(basic_info)
 
 
 async def twitter_to_markdown(context, url, proxies):
