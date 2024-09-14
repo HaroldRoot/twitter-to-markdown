@@ -25,7 +25,7 @@ async def login_and_save_cookies(browser):
 
 async def main():
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await login_and_save_cookies(browser)
         config = load_config()
         proxies = {k: v for k, v in config['proxies'].items() if v}
