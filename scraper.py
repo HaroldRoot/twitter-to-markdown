@@ -1,9 +1,10 @@
 import asyncio
+from datetime import datetime
 
 from bs4 import BeautifulSoup
+from playwright.async_api import expect
 
 from cookies_handler import load_cookies
-from markdowner import basic_info_to_markdown
 
 
 async def get_final_url(page, short_url):
@@ -95,11 +96,61 @@ async def scrape_basic_info(page, url):
     return basic_info
 
 
-async def scrape_tweets(context, url, proxies, folder_path):
-    pass
+async def scrape_tweets(page, url, proxies, folder_path):
+    async_name = asyncio.current_task().get_name()
+    await page.goto(url)
+
+    for scroll_count in range(1, 5):
+        await expect(page.locator('article').nth(0)).to_be_visible(timeout=100000)
+
+        article_count = await page.locator('article').count()
+
+        for index in range(article_count):
+            print(f"{async_name} -> ", "=" * 60)
+            print(f"{async_name} -> 第 {scroll_count} 次滚动，正在获取推文...({index + 1}/{article_count})")
+
+            article = page.locator("article").first
+
+            soup = BeautifulSoup(await article.inner_html(), "lxml")
+
+            try:
+                if 'style="text-overflow: unset;">Ad</span>' in str(soup):
+                    raise ValueError("遇到广告，跳过")
+
+                time_element = soup.find("time")
+                publish_time = time_element.get("datetime")
+                publish_url = "https://x.com" + time_element.find_parent().get("href")
+
+                author = soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[0].get_text()
+                author += soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[-2].get_text()
+
+                tweet_text = soup.find("div", attrs={"data-testid": "tweetText"})
+                publish_content = tweet_text.get_text() if tweet_text else ""
+
+                tweet_photo = soup.find("div", attrs={"data-testid": "tweetPhoto"})
+                publish_images = [img.get("src") for img in tweet_photo.find_all("img")] if tweet_photo else []
+
+                print(f"{async_name} ->", "发布时间：",
+                      datetime.strptime(publish_time, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y年%m月%d日 %H:%M:%S"))
+                print(f"{async_name} ->", "发布者：", author)
+                print(f"{async_name} ->", "推文地址：", publish_url)
+                print(f"{async_name} ->", "推文内容：", publish_content)
+                print(f"{async_name} ->", "推文图片：", publish_images)
+
+            except ValueError as e:
+                print(f"{async_name} -> 第 {scroll_count} 次滚动，({index + 1}/{article_count}) 推文获取出错：", str(e))
+
+            await article.locator("xpath=../../..").first.evaluate("(element) => element.remove()")
+
+            await asyncio.sleep(1)
 
 
 async def twitter_to_markdown(context, url, proxies):
+    async_name = asyncio.current_task().get_name()
+    print(async_name)
+
+    task_name_should = url.split('/')[-1]
+    asyncio.current_task().set_name(task_name_should)
     async_name = asyncio.current_task().get_name()
     print(async_name)
 
@@ -107,8 +158,9 @@ async def twitter_to_markdown(context, url, proxies):
     page = await context.new_page()
     await page.goto(url)
 
-    basic_info = await scrape_basic_info(page, url)
-    print(basic_info)
-    folder_path = basic_info_to_markdown(basic_info)
+    # basic_info = await scrape_basic_info(page, url)
+    # print(basic_info)
+    # folder_path = basic_info_to_markdown(basic_info)
 
-    await scrape_tweets(context, url, proxies, folder_path)
+    folder_path = None
+    await scrape_tweets(page, url, proxies, folder_path)
