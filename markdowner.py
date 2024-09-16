@@ -73,8 +73,8 @@ def basic_info_to_markdown(basic_info: dict[str, str]):
     try:
         with file_path.open("w", encoding="utf-8") as f:
             f.write(md_content)
-        print(f"Saved post to {file_path}")
+        print(f"基本信息保存成功：{file_path}")
     except IOError as e:
-        print(f"Failed to save post to {file_path}: {e}")
+        print(f"基本信息保存失败：{e}")
 
     return folder_path
