@@ -8,3 +8,6 @@ urls = [
     "https://x.com/ThePSF",
     "https://x.com/clcoding",
 ]
+
+[with_replies]
+enabled = true

@@ -96,17 +96,23 @@ async def scrape_basic_info(page, url):
     return basic_info
 
 
-async def scrape_tweets(page, url, proxies, folder_path):
+async def scrape_tweets(page, url, proxies, folder_path, with_replies):
     async_name = asyncio.current_task().get_name()
+
+    if with_replies:
+        url += "/with_replies"
+    print(f"{async_name} ->", "=" * 60)
+    print(f"{async_name} -> 开始爬取 {url}")
     await page.goto(url)
 
-    for scroll_count in range(1, 5):
+    EXPECTED_SCROLL_COUNT = 999
+    for scroll_count in range(1, EXPECTED_SCROLL_COUNT):
         await expect(page.locator('article').nth(0)).to_be_visible(timeout=100000)
 
         article_count = await page.locator('article').count()
 
         for index in range(article_count):
-            print(f"{async_name} -> ", "=" * 60)
+            print(f"{async_name} ->", "=" * 60)
             print(f"{async_name} -> 第 {scroll_count} 次滚动，正在获取推文...({index + 1}/{article_count})")
 
             article = page.locator("article").first
@@ -145,7 +151,7 @@ async def scrape_tweets(page, url, proxies, folder_path):
             await asyncio.sleep(1)
 
 
-async def twitter_to_markdown(context, url, proxies):
+async def twitter_to_markdown(context, url, proxies, with_replies):
     async_name = asyncio.current_task().get_name()
     print(async_name)
 
@@ -163,4 +169,4 @@ async def twitter_to_markdown(context, url, proxies):
     # folder_path = basic_info_to_markdown(basic_info)
 
     folder_path = None
-    await scrape_tweets(page, url, proxies, folder_path)
+    await scrape_tweets(page, url, proxies, folder_path, with_replies)

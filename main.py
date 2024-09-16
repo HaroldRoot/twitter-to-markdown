@@ -12,9 +12,15 @@ async def login_and_save_cookies(browser):
     context = await browser.new_context()
     await load_cookies(context)
     page = await context.new_page()
-    await page.goto('https://x.com/home')
+    home_page = 'https://x.com/home'
 
-    if page.url == 'https://x.com/home':
+    try:
+        await page.goto(home_page)
+    except Exception as e:
+        print(f"访问 {home_page} 出错：{e}")
+        exit()
+
+    if page.url == home_page:
         print("自动检测：已登录")
     else:
         Prompt.ask("请手动登录，并在完成后按回车键继续...")
@@ -30,7 +36,8 @@ async def main():
         config = load_config()
         proxies = {k: v for k, v in config['proxies'].items() if v}
         urls_to_scrape = config['urls_to_scrape']['urls']
-        tasks = [twitter_to_markdown(context, url, proxies) for url in urls_to_scrape]
+        with_replies = config['with_replies']['enabled']
+        tasks = [twitter_to_markdown(context, url, proxies, with_replies) for url in urls_to_scrape]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result in results:
