@@ -30,34 +30,35 @@ async def scrape_tweets(page, url, proxies, folder_path, with_replies):
 
             article = page.locator("article").first
 
-            soup = BeautifulSoup(await article.inner_html(), "lxml")
+            if scroll_count >= 88:
+                soup = BeautifulSoup(await article.inner_html(), "lxml")
 
-            try:
-                if 'style="text-overflow: unset;">Ad</span>' in str(soup):
-                    raise ValueError("遇到广告，跳过")
+                try:
+                    if 'style="text-overflow: unset;">Ad</span>' in str(soup):
+                        raise ValueError("遇到广告，跳过")
 
-                time_element = soup.find("time")
-                publish_time = time_element.get("datetime")
-                publish_url = "https://x.com" + time_element.find_parent().get("href")
+                    time_element = soup.find("time")
+                    publish_time = time_element.get("datetime")
+                    publish_url = "https://x.com" + time_element.find_parent().get("href")
 
-                author = soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[0].get_text()
-                author += soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[-2].get_text()
+                    author = soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[0].get_text()
+                    author += soup.find("div", attrs={"data-testid": "User-Name"}).find_all('span')[-2].get_text()
 
-                tweet_text = soup.find("div", attrs={"data-testid": "tweetText"})
-                publish_content = tweet_text.get_text() if tweet_text else ""
+                    tweet_text = soup.find("div", attrs={"data-testid": "tweetText"})
+                    publish_content = tweet_text.get_text() if tweet_text else ""
 
-                tweet_photo = soup.find("div", attrs={"data-testid": "tweetPhoto"})
-                publish_images = [img.get("src") for img in tweet_photo.find_all("img")] if tweet_photo else []
+                    tweet_photo = soup.find("div", attrs={"data-testid": "tweetPhoto"})
+                    publish_images = [img.get("src") for img in tweet_photo.find_all("img")] if tweet_photo else []
 
-                print(f"{async_name} ->", "发布时间：",
-                      datetime.strptime(publish_time, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y年%m月%d日 %H:%M:%S"))
-                print(f"{async_name} ->", "发布者：", author)
-                print(f"{async_name} ->", "推文地址：", publish_url)
-                print(f"{async_name} ->", "推文内容：", publish_content)
-                print(f"{async_name} ->", "推文图片：", publish_images)
+                    print(f"{async_name} ->", "发布时间：",
+                          datetime.strptime(publish_time, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y年%m月%d日 %H:%M:%S"))
+                    print(f"{async_name} ->", "发布者：", author)
+                    print(f"{async_name} ->", "推文地址：", publish_url)
+                    print(f"{async_name} ->", "推文内容：", publish_content)
+                    print(f"{async_name} ->", "推文图片：", publish_images)
 
-            except ValueError as e:
-                print(f"{async_name} -> 第 {scroll_count} 次滚动，({index + 1}/{article_count}) 推文获取出错：", str(e))
+                except ValueError as e:
+                    print(f"{async_name} -> 第 {scroll_count} 次滚动，({index + 1}/{article_count}) 推文获取出错：", str(e))
 
             await article.locator("xpath=../../..").first.evaluate("(element) => element.remove()")
 
@@ -73,9 +74,10 @@ async def twitter_to_markdown(context, url, proxies, with_replies):
     page = await context.new_page()
     await page.goto(url)
 
-    profile_scraper = ProfileScraper()
-    profile = await profile_scraper.scrape_profile(page, url)
-    print(f"基本信息收集：{profile}")
-    folder_path = profile_to_markdown(profile)
+    # profile_scraper = ProfileScraper()
+    # profile = await profile_scraper.scrape_profile(page, url)
+    # print(f"基本信息收集：{profile}")
+    # folder_path = profile_to_markdown(profile)
 
-    # folder_path = None  # await scrape_tweets(page, url, proxies, folder_path, with_replies)
+    folder_path = None
+    await scrape_tweets(page, url, proxies, folder_path, with_replies)
