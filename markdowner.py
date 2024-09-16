@@ -33,9 +33,9 @@ def save_image(url, attachments_dir: Path):
     return f"![[{file_name}]]"
 
 
-def basic_info_to_markdown(basic_info: dict[str, str]):
-    fullname = basic_info.get("fullname", "")
-    username = basic_info.get("username", "")
+def profile_to_markdown(profile: dict[str, str]):
+    fullname = profile.get("fullname", "")
+    username = profile.get("username", "")
     current_time = datetime.now().strftime("%Y%m%d%H%M")
     folder_name = f"{fullname} {username} - {current_time}"
 
@@ -54,17 +54,17 @@ def basic_info_to_markdown(basic_info: dict[str, str]):
                   "| --- | ----- |\n")
 
     for key, label in fields:
-        value = basic_info.get(key, "")
+        value = profile.get(key, "")
         if value:
             table_rows += f"| {label} | {value} |\n"
 
-    bio = "\n# 简介\n\n" + basic_info.get("bio", "") + "\n\n"
+    bio = "\n# 简介\n\n" + profile.get("bio", "") + "\n\n"
 
     attachments_dir = folder_path / "attachments"
     attachments_dir.mkdir(exist_ok=True)
 
-    header_photo = "\n# 背景图片\n\n" + save_image(basic_info.get("header_photo_src", ""), attachments_dir) + "\n\n"
-    photo = "\n# 头像图片\n\n" + save_image(basic_info.get("photo_src", ""), attachments_dir) + "\n\n"
+    header_photo = "\n# 背景图片\n\n" + save_image(profile.get("header_photo_src", ""), attachments_dir) + "\n\n"
+    photo = "\n# 头像图片\n\n" + save_image(profile.get("photo_src", ""), attachments_dir) + "\n\n"
 
     md_content = table_rows + bio + header_photo + photo
 
